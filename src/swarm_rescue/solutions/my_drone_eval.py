@@ -6,6 +6,7 @@ from random import uniform
 import math
 
 class MyDroneEval(MyDroneLidarCommunication):
+    pass
     def __init__(self,
                  identifier: Optional[int] = None,
                  misc_data: Optional[MiscData] = None,
@@ -20,6 +21,51 @@ class MyDroneEval(MyDroneLidarCommunication):
         self.distStopStraight = random.uniform(10, 50) #Définit une distance aléatoire entre 10 et 50  que le drone doit parcourir en ligne droite avant de changer de comportement
         self.isTurning = False #Un booléen qui indique si le drone est en train de tourner ou non
 
+
+    #Pour détecter une collision
+    def process_lidar_sensor(self):
+            if self.lidar_values() is None:  # return les valeurs du capteur lidar
+                return False
+            collided = False  # on suppose qu'il n'y a pas de collision
+            dist = min(self.lidar_values())  # pour trouver la distance la plus petite entre le drone et un obstacle
+            if dist < 40:  # indique que le drone est trop proche d'un obstacle
+                collided = True  # alors il y a une collision
+            return collided  # indique si une collision a été detectée
+
+    # Pour gérer une collision : une rotation quand le drone rencontre un obstacle
+    def control(self):
+        command_straight = {"forward": 1.0,
+                            "lateral": 0.0,
+                            "rotation": 0.0,
+                            "grasper": 0}
+
+        command_turn = {"forward": 0.0,
+                        "lateral": 0.0,
+                        "rotation": 1.0,
+                        "grasper": 0}
+
+        collided = self.process_lidar_sensor()
+
+        self.counterStraight += 1
+
+        if collided and not self.isTurning and self.counterStraight > self.distStopStraight:
+            self.isTurning = True
+            self.angleStopTurning = random.uniform(-math.pi, math.pi)
+
+        measured_angle = 0
+        if self.measured_compass_angle() is not None:
+            measured_angle = self.measured_compass_angle()
+
+        diff_angle = normalize_angle(self.angleStopTurning - measured_angle)
+        if self.isTurning and abs(diff_angle) < 0.2:
+            self.isTurning = False
+            self.counterStraight = 0
+            self.distStopStraight = random.uniform(10, 50)
+
+        if self.isTurning:
+            return command_turn
+        else:
+            return command_straight
 
 
 

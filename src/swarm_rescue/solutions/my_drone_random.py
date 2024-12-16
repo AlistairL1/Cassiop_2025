@@ -35,16 +35,16 @@ class MyDroneRandom(DroneAbstract):
         """
         Returns True if the drone collided an obstacle
         """
-        if self.lidar_values() is None:
+        if self.lidar_values() is None: #return les valeurs du capteur lidar
             return False
 
-        collided = False
-        dist = min(self.lidar_values())
+        collided = False #on suppose qu'il n'y a pas de collision
+        dist = min(self.lidar_values()) #pour trouver la distance la plus petite entre le drone et un obstacle
 
-        if dist < 40:
-            collided = True
+        if dist < 40: #indique que le drone est trop proche d'un obstacle
+            collided = True #alors il y a une collision
 
-        return collided
+        return collided #indique si une collision a été detectée
 
     def control(self):
         """
