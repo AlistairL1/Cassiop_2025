@@ -31,7 +31,7 @@ class MyDroneRandom(DroneAbstract):
         """
         pass
 
-    def process_lidar_sensor(self):
+    def process_lidar_sensor(self): #fonction pour détecter une collision
         """
         Returns True if the drone collided an obstacle
         """
@@ -46,7 +46,7 @@ class MyDroneRandom(DroneAbstract):
 
         return collided #indique si une collision a été detectée
 
-    def control(self):
+    def control(self): # Pour gérer une collision : une rotation quand le drone rencontre un obstacle
         """
         The Drone will move forward and turn for a random angle when an obstacle is hit
         """
