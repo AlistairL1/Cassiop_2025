@@ -13,8 +13,8 @@ class MyDroneEval(DroneAbstract):
                          misc_data=misc_data,
                          display_lidar_graph=False,
                          **kwargs)
-        self.goal = np.array([100.0, 100.0])  # Example target position (point B)
-        self.threshold = 10.0  # Distance threshold to consider the target reached
+        self.goal = np.array([100.0, 100.0])  # Point B
+        self.threshold = 10.0  # Seuil
 
     def define_message_for_all(self):
         pass
@@ -28,8 +28,8 @@ class MyDroneEval(DroneAbstract):
         if current_position is None or np.any(np.isnan(current_position)):
             return command
 
-        direction_vector = self.goal - current_position
-        distance_to_target = np.linalg.norm(direction_vector)
+        direction_vector = self.goal - current_position # Vecteur de direction
+        distance_to_target = np.linalg.norm(direction_vector) # Distance à l'objectif
 
         if np.isnan(distance_to_target) or distance_to_target < self.threshold:
             return command
@@ -43,11 +43,11 @@ class MyDroneEval(DroneAbstract):
         angle_diff = direction_angle - current_angle
         angle_diff = (angle_diff + np.pi) % (2 * np.pi) - np.pi  # Normalize angle to [-pi, pi]
 
-        # Proportional control for rotation
+        # Correcteur P
         Kp_rotation = 1.0
         command["rotation"] = clamp(Kp_rotation * angle_diff, -1.0, 1.0)
 
-        # Proportional control for forward movement
+        # Correcteur P
         Kp_forward = 0.5
         command["forward"] = clamp(Kp_forward * distance_to_target, -1.0, 1.0)
 
