@@ -31,3 +31,14 @@ Ce document servira à synthétiser les réunions avec notre tuteur
 - Pour la semaine prochaine :
     - Contrôleur avec x et y ET avec x, y et Theta
 
+## Réunion du 10 février
+- Principe fonctionnement du filtre passe-bas
+- Proposition d'autres filtres numériques (moyenne glissante)
+
+- Filtre passe-bas bien car 1 seule multiplication MAIS déphasage important et chute importante de l'amplitude.
+
+- Configuration A avec (x et y)
+
+- Pour fix mon code (converger pour un chemin de A vers B), connaissant \theta orientation et theta cible, pondéré l'accélération (V = V *(1_(theta_or - theta_c)))
+
+- On a le droit d'import des bibliothèques supplémentaires
