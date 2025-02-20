@@ -33,7 +33,9 @@ class MyDroneGpsDisabler(DroneAbstract):
         self.gps_filter = Filter()
 
         # Set the alpha parameter for the low-pass filter
-        self.alpha = 0.5  # Adjust this value as needed
+        self.alpha = 0.25  # Adjust this value as needed
+
+
 
     def define_message_for_all(self):
         """
@@ -44,11 +46,16 @@ class MyDroneGpsDisabler(DroneAbstract):
 
         # Smooth the GPS position using the low-pass filter
         filtered_gps_position = (
-            self.gps_filter.low_pass(raw_gps_position[0], self.alpha),
-            self.gps_filter.low_pass(raw_gps_position[1], self.alpha),
+            self.gps_filter.low_pass(raw_gps_position[0], self.alpha), #Position en X
+            self.gps_filter.low_pass(raw_gps_position[1], self.alpha), #Position en Y
         )
+
         print(f"Position GPS Brute: {raw_gps_position}")
-        print(f"Position GPS Filtrée: {filtered_gps_position}")
+        print(f"Position GPS Filtre: {filtered_gps_position}")
+
+
+
+        print(f"Erreur GPS: {self.gps_filter.error(filtered_gps_position, self.true_position())}")
 
         # Use the smoothed position in the message
         msg_data = (self.identifier,
@@ -91,8 +98,8 @@ class MyMapGpsDisabler(MapAbstract):
         playground = ClosedPlayground(size=self._size_area)
 
         # DISABLER ZONES
-        playground.add(self._no_gps_zone, self._no_gps_zone_pos)
-        playground.add(self._kill_zone, self._kill_zone_pos)
+        #playground.add(self._no_gps_zone, self._no_gps_zone_pos)
+        #playground.add(self._kill_zone, self._kill_zone_pos)
 
         # POSITIONS OF THE DRONES
         misc_data = MiscData(size_area=self._size_area,
