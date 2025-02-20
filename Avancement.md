@@ -31,3 +31,26 @@ Ce document servira à synthétiser les réunions avec notre tuteur
 - Pour la semaine prochaine :
     - Contrôleur avec x et y ET avec x, y et Theta
 
+## Réunion du 10 février
+- Principe fonctionnement du filtre passe-bas
+- Proposition d'autres filtres numériques (moyenne glissante)
+
+- Filtre passe-bas bien car 1 seule multiplication MAIS déphasage important et chute importante de l'amplitude.
+
+- Configuration A avec (x et y)
+
+- Pour fix mon code (converger pour un chemin de A vers B), connaissant \theta orientation et theta cible, pondéré l'accélération (V = V *(1_(theta_or - theta_c)))
+
+- On a le droit d'import des bibliothèques supplémentaires
+
+## Réunion du 17 février
+- `command` donne des commandes en termes d'**accélération** pour diriger le drone.
+- S'intéresser à la sous commande `lateral`.
+- Implémenter un correcteur PD.
+
+
+- Il y a différents niveaux:
+  - Contrôle
+  - **Planification Mouvement => Prochaine ETAPE**
+  - Planification Tâche (=> Construction carte avec idéalement les obstacles (car simplification pour la planification) : le problème est le brouillage => Solution optimale avec SLAM mais **impossible** pour la compétition)
+  - Choix Tâche (=> Utiliser FSM : repère une victime donc mise en place du sauvetage puis après continue l'exploration)
