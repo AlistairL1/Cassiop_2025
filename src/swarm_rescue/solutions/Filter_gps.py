@@ -7,6 +7,7 @@ keyboard
 """
 
 import sys
+import time
 from pathlib import Path
 from typing import Type
 
@@ -32,48 +33,23 @@ class MyDroneGpsDisabler(DroneAbstract):
         # Create an instance of Filter for the GPS smoothing
         self.gps_filter = Filter()
         self.alpha = 0.25
-        self.list_gps = []
 
     def get_measured_gps_position(self):
         """
         Method to retrieve the measured GPS position.
         """
-        self.list_gps.append(self.measured_gps_position())
-
-        # Ensure the list contains a maximum of 1000 elements
-        if len(self.list_gps) > 1000:
-            self.list_gps.pop(0)  # Remove the oldest GPS position
-
-        return self.measured_gps_position(), self.list_gps
+        return self.measured_gps_position()
 
     def define_message_for_all(self):
         """
         Include GPS filtering in the communication message
         """
-        # Raw GPS position
-        raw_gps_position = self.measured_gps_position()
-
-        # Smooth the GPS position using the low-pass filter
-        filtered_gps_position = (
-            self.gps_filter.low_pass(raw_gps_position[0], self.alpha), #Position en X
-            self.gps_filter.low_pass(raw_gps_position[1], self.alpha), #Position en Y
-        )
-
-        print(f"Position GPS Brute: {raw_gps_position}")
-        print(f"Position GPS Filtre: {filtered_gps_position}")
-
-
-
-
-        print(f"Erreur GPS: {self.gps_filter.error(filtered_gps_position, self.true_position())}")
-
-        # Use the smoothed position in the message
-        msg_data = (self.identifier,
-                    (filtered_gps_position,
-                     self.measured_compass_angle(),
-                     raw_gps_position))
+        msg_data = (
+            print(f"Error : {self.gps_filter.error(self.filter_gps_position(), self.true_position())}"))
 
         return msg_data
+        #print(f"Error{self.filter_gps_position()}")
+
 
     def control(self):
         """
@@ -84,6 +60,22 @@ class MyDroneGpsDisabler(DroneAbstract):
                    "rotation": 0.0,
                    "grasper": 0}
         return command
+    def filter_gps_position(self):
+
+        raw_gps_position = self.measured_gps_position()
+        raw_imu_velocity = self.measured_velocity()
+
+        #Low pass
+        filtered_gps_position_lowpass = (
+            self.gps_filter.low_pass(raw_gps_position[0], self.alpha),  # Position en X
+            self.gps_filter.low_pass(raw_gps_position[1], self.alpha),  # Position en Y
+        )
+
+
+        #Kalman
+        filtered_gps_position_kalman = self.gps_filter.Kalman(raw_gps_position, raw_imu_velocity)
+        return filtered_gps_position_lowpass
+
 
 
 class MyMapGpsDisabler(MapAbstract):

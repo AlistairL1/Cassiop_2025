@@ -1,3 +1,5 @@
+from os import wait4
+
 import numpy as np
 import matplotlib.pyplot as plt
 from filterpy.kalman import KalmanFilter
@@ -17,7 +19,8 @@ kf.H = np.array([[1, 0, 0, 0],   # GPS -> x
                  [0, 0, 0, 1]])  # IMU -> vy
 kf.Q = np.eye(4) * 0.01 # 3. Bruit de processus (Q) : Incertitude sur le modèle (accélération non prise en compte)
 kf.R = np.diag([5, 5, 1, 1])  # GPS (position incertaine) et IMU (vitesse plus précise) # Bruit de mesure (R) : Confiance dans chaque capteur
-kf.x = np.array([[0], [0], [1], [1]])# 5. État initial (x) : On commence au point (0, 0) avec une vitesse de (1, 1)
+kf.x = np.array([[0], [0], [1
+                            ], [1]])# 5. État initial (x) : On commence au point (0, 0) avec une vitesse de (1, 1)
 kf.P = np.eye(4) * 1000 # 6. Covariance initiale (P) : Incertitude initiale élevée
 
 # Simulation : Générer des mesures bruitées
@@ -43,6 +46,7 @@ for i in range(n_steps):
 
     # Sauvegarder l'estimation
     estimations.append((kf.x[0, 0], kf.x[1, 0]))
+    print(f"Estimation: {z}")
 
 true_x, true_y = zip(*true_positions)
 gps_x, gps_y = zip(*gps_measurements)
