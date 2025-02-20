@@ -11,6 +11,7 @@ class Filter:
 
     def low_pass(self, current_value, alpha):
         self.previous = None
+
         if self.previous is None:
             # Initialize the filter with the first value
             self.previous = current_value

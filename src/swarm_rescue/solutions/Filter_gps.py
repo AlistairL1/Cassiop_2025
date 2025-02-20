@@ -31,11 +31,20 @@ class MyDroneGpsDisabler(DroneAbstract):
 
         # Create an instance of Filter for the GPS smoothing
         self.gps_filter = Filter()
+        self.alpha = 0.25
+        self.list_gps = []
 
-        # Set the alpha parameter for the low-pass filter
-        self.alpha = 0.25  # Adjust this value as needed
+    def get_measured_gps_position(self):
+        """
+        Method to retrieve the measured GPS position.
+        """
+        self.list_gps.append(self.measured_gps_position())
 
+        # Ensure the list contains a maximum of 1000 elements
+        if len(self.list_gps) > 1000:
+            self.list_gps.pop(0)  # Remove the oldest GPS position
 
+        return self.measured_gps_position(), self.list_gps
 
     def define_message_for_all(self):
         """
@@ -52,6 +61,7 @@ class MyDroneGpsDisabler(DroneAbstract):
 
         print(f"Position GPS Brute: {raw_gps_position}")
         print(f"Position GPS Filtre: {filtered_gps_position}")
+
 
 
 
@@ -117,8 +127,6 @@ class MyMapGpsDisabler(MapAbstract):
 def main():
     my_map = MyMapGpsDisabler()
     my_playground = my_map.construct_playground(drone_type=MyDroneGpsDisabler)
-
-    # Set this value to True to generate a video of the mission
     video_capture_enabled = False
     if video_capture_enabled:
         team_info = TeamInfo()
