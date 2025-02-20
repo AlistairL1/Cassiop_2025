@@ -11,7 +11,7 @@ class EmptyMap(MapAbstract):
         super().__init__()
         self._size_area = (800, 800)
         self._number_drones = 1
-        self._drones_pos = [((0, 0), 0)]
+        self._drones_pos = [((-200, -200), 0)]
         self._drones = []
         self.goal_position = (100, 100)  # Example goal position
 

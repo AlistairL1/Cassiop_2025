@@ -14,7 +14,6 @@ class MyDroneEval(DroneAbstract):
                          display_lidar_graph=False,
                          **kwargs)
         self.goal = np.array([100.0, 100.0])  # Point B
-        self.threshold = 10.0  # Seuil
 
     def define_message_for_all(self):
         pass
@@ -25,30 +24,31 @@ class MyDroneEval(DroneAbstract):
                    "rotation": 0.0}
 
         current_position = self.measured_gps_position()
-        if current_position is None or np.any(np.isnan(current_position)):
+        current_x_angle = self.measured_compass_angle()  # Angle avec l'axe des abscisses
+        if current_position is None or np.any(np.isnan(current_position)) \
+                                    or current_x_angle is None \
+                                    or np.any(np.isnan(current_x_angle)):
             return command
 
-        direction_vector = self.goal - current_position # Vecteur de direction
-        distance_to_target = np.linalg.norm(direction_vector) # Distance à l'objectif
+        direction_vector = self.goal - current_position  # Vecteur de direction
+        distance_to_target = np.linalg.norm(direction_vector)  # Distance à l'objectif (norme euclidienne)
 
-        if np.isnan(distance_to_target) or distance_to_target < self.threshold:
-            return command
+        direction_angle_x = np.arctan2(direction_vector[1], direction_vector[0])  # Angle target avec l'axe (Ox) positif
 
-        direction_angle = np.arctan2(direction_vector[1], direction_vector[0])
-        current_angle = self.measured_compass_angle()
+        angle_diff_x = ((direction_angle_x - current_x_angle) + np.pi) % (2*np.pi) - np.pi
 
-        if current_angle is None or np.isnan(current_angle):
-            return command
+        # Contrôle forward (x)
+        Kp_forward = 0.75
+        a_forward = max(0, 4/np.pi * angle_diff_x)
+        command["forward"] = clamp(Kp_forward * a_forward * distance_to_target, -1.0, 1.0)
 
-        angle_diff = direction_angle - current_angle
-        angle_diff = (angle_diff + np.pi) % (2 * np.pi) - np.pi  # Normalize angle to [-pi, pi]
+        # Contrôle latéral (y)
+        Kp_lateral = 0
+        a_latetal = max(0, 4/np.pi * angle_diff_x)
+        command["lateral"] = clamp(Kp_lateral * a_latetal * distance_to_target, -1.0, 1.0)
 
-        # Correcteur P
-        Kp_rotation = 1.0
-        command["rotation"] = clamp(Kp_rotation * angle_diff, -1.0, 1.0)
-
-        # Correcteur P
-        Kp_forward = 0.5
-        command["forward"] = clamp(Kp_forward * distance_to_target, -1.0, 1.0)
+        # Contrôle rotation (θ)
+        Kp_rotation = .5
+        command["rotation"] = clamp(Kp_rotation * angle_diff_x * distance_to_target, -1.0, 1.0)
 
         return command
