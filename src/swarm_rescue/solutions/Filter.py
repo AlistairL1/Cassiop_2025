@@ -1,8 +1,6 @@
 import numpy as np
 from filterpy.kalman import KalmanFilter
 
-from solutions.kalman import n_steps
-
 
 class Filter:
     def __init__(self):

@@ -50,7 +50,6 @@ class MyDroneGpsDisabler(DroneAbstract):
         return msg_data
         #print(f"Error{self.filter_gps_position()}")
 
-
     def control(self):
         """
         We only send a command to do nothing
@@ -60,6 +59,7 @@ class MyDroneGpsDisabler(DroneAbstract):
                    "rotation": 0.0,
                    "grasper": 0}
         return command
+
     def filter_gps_position(self):
 
         raw_gps_position = self.measured_gps_position()
@@ -71,12 +71,9 @@ class MyDroneGpsDisabler(DroneAbstract):
             self.gps_filter.low_pass(raw_gps_position[1], self.alpha),  # Position en Y
         )
 
-
         #Kalman
         filtered_gps_position_kalman = self.gps_filter.Kalman(raw_gps_position, raw_imu_velocity)
         return filtered_gps_position_lowpass
-
-
 
 class MyMapGpsDisabler(MapAbstract):
 
