@@ -38,11 +38,11 @@ def add_goal(X, Y, s, r, loc):
     return delx, dely
 
 
-x = np.arange(-0, 50, 1)
-y = np.arange(-0, 50, 1)
-goal = random.sample(range(0, 50), 2)
-s = 7
-r = 2
+x = np.arange(-0, 50, 1)                 #doit etre de la taille de la map
+y = np.arange(-0, 50, 1)                 #doit etre de la taille de la map
+goal = random.sample(range(0, 50), 2)     #inclure la victime détecté par le lidar (conversion coordonnée polaire)
+s = 5
+r = 0.5
 seek_points = np.array([[0, 0]])
 X, Y = np.meshgrid(x, y)
 delx, dely = add_goal(X, Y, s, r, goal)
@@ -106,13 +106,11 @@ def plot_graph(X, Y, delx, dely, obj, fig, ax, loc, r, i, color, start_goal=np.a
 
 def add_obstacle(X, Y, delx, dely, goal):
     #power of the field
-    s = 2
-
+    s = 7
     # generating obstacle with random sizes
     r = 1
-
     # generating random location of the obstacle
-    obstacle = random.sample(range(0, 50), 2)
+    obstacle = (19, 20) #mettre la position de l'obstacle détecté par le lidar (cordonnés polaire)
     for i in range(len(x)):
         for j in range(len(y)):
 

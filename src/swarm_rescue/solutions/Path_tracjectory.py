@@ -58,7 +58,6 @@ class Path_tracjectory(DroneAbstract):
         s = 7
         # generating obstacle with random sizes
         r = 1
-
         # generating random location of the obstacle
         obstacle = random.sample(range(0, 50), 2)
         for i in range(len(x)):
