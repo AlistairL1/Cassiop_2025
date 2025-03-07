@@ -23,81 +23,63 @@ class Path_tracjectory(DroneAbstract):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def add_goal(X, Y, s, r, loc):
-        delx = np.zeros_like(X)
-        dely = np.zeros_like(Y)
+    def calculate_gradient(Z, X, Y):
+        """
+        Calculate the gradient of the potential field and find minimum gradient point.
+
+        Args:
+            Z: The potential field values
+            X, Y: The meshgrid coordinates
+
+        Returns:
+            grad_x, grad_y: The gradient components
+            min_grad_point: Coordinates of minimum gradient magnitude point
+            no_field: Boolean indicating if there's no meaningful gradient field
+        """
+        # Calculate gradient using numpy's gradient function
+        grad_y, grad_x = np.gradient(Z)
+
+        # Calculate gradient magnitude
+        grad_magnitude = np.sqrt(grad_x ** 2 + grad_y ** 2)
+
+        # Check if there's a meaningful field
+        if np.any(grad_magnitude > 0.001):  # Small threshold to account for numerical precision
+            # Find the minimum non-zero gradient
+            # Create a masked array to ignore zero or near-zero gradients
+            masked_magnitude = np.ma.masked_where(grad_magnitude < 0.001, grad_magnitude)
+
+            # Find the minimum gradient
+            min_idx = np.ma.argmin(masked_magnitude)
+            min_i, min_j = np.unravel_index(min_idx, grad_magnitude.shape)
+            min_grad_point = (X[min_i, min_j], Y[min_i, min_j])
+
+            return grad_x, grad_y, min_grad_point, False
+        else:
+            # No meaningful field case
+            return grad_x, grad_y, None, True
+
+    def add_obstacle(self):
+        # Define grid
+        x = np.arange(0, 50, 1)
+        y = np.arange(0, 50, 1)
+        X, Y = np.meshgrid(x, y)
+
+        # Define obstacle parameters
+        obstacle = (25, 25)  # Center of the obstacle
+        r_obstacle = 3  # Obstacle radius - increased for better visualization
+
+        # Create smoother potential field for the obstacle only
+        Z_obstacle = np.zeros_like(X, dtype=float)
+
         for i in range(len(x)):
             for j in range(len(y)):
+                d_obstacle = np.sqrt((obstacle[0] - X[i, j]) ** 2 + (obstacle[1] - Y[i, j]) ** 2)
 
-                d = np.sqrt((loc[0] - X[i][j]) ** 2 + (loc[1] - Y[i][j]) ** 2)
-                # print(f"{i} and {j}")
-                theta = np.arctan2(loc[1] - Y[i][j], loc[0] - X[i][j])
-                if d < r:
-                    delx[i][j] = 0
-                    dely[i][j] = 0
-                elif d > r + s:
-                    delx[i][j] = 50 * s * np.cos(theta)
-                    dely[i][j] = 50 * s * np.sin(theta)
+                # Create a stronger repulsion within the obstacle radius
+                if d_obstacle <= r_obstacle:
+                    Z_obstacle[i, j] = -200  # Maximum repulsion inside obstacle
                 else:
-                    delx[i][j] = 50 * (d - r) * np.cos(theta)
-                    dely[i][j] = 50 * (d - r) * np.sin(theta)
-        return delx, dely
-
-    x = np.arange(-0, 50, 1)
-    y = np.arange(-0, 50, 1)
-    goal = random.sample(range(0, 50), 2)
-    s = 7
-    r = 2
-    seek_points = np.array([[0, 0]])
-    X, Y = np.meshgrid(x, y)
-    delx, dely = add_goal(X, Y, s, r, goal)
-
-
-    def add_obstacle(X, Y, delx, dely, goal):
-        #power of the field
-        s = 7
-        # generating obstacle with random sizes
-        r = 1
-        # generating random location of the obstacle
-        obstacle = random.sample(range(0, 50), 2)
-        for i in range(len(x)):
-            for j in range(len(y)):
-
-                d_goal = np.sqrt((goal[0] - X[i][j]) ** 2 + ((goal[1] - Y[i][j])) ** 2)
-                d_obstacle = np.sqrt((obstacle[0] - X[i][j]) ** 2 + (obstacle[1] - Y[i][j]) ** 2)
-                # print(f"{i} and {j}")
-                theta_goal = np.arctan2(goal[1] - Y[i][j], goal[0] - X[i][j])
-                theta_obstacle = np.arctan2(obstacle[1] - Y[i][j], obstacle[0] - X[i][j])
-                if d_obstacle < r:
-                    delx[i][j] = -1 * np.sign(np.cos(theta_obstacle)) * 5 + 0
-                    dely[i][j] = -1 * np.sign(np.cos(theta_obstacle)) * 5 + 0
-                elif d_obstacle > r + s:
-                    delx[i][j] += 0 - (50 * s * np.cos(theta_goal))
-                    dely[i][j] += 0 - (50 * s * np.sin(theta_goal))
-                elif d_obstacle < r + s:
-                    delx[i][j] += -150 * (s + r - d_obstacle) * np.cos(theta_obstacle)
-                    dely[i][j] += -150 * (s + r - d_obstacle) * np.sin(theta_obstacle)
-                if d_goal < r + s:
-                    if delx[i][j] != 0:
-                        delx[i][j] += (50 * (d_goal - r) * np.cos(theta_goal))
-                        dely[i][j] += (50 * (d_goal - r) * np.sin(theta_goal))
-                    else:
-
-                        delx[i][j] = (50 * (d_goal - r) * np.cos(theta_goal))
-                        dely[i][j] = (50 * (d_goal - r) * np.sin(theta_goal))
-
-                if d_goal > r + s:
-                    if delx[i][j] != 0:
-                        delx[i][j] += 50 * s * np.cos(theta_goal)
-                        dely[i][j] += 50 * s * np.sin(theta_goal)
-                    else:
-
-                        delx[i][j] = 50 * s * np.cos(theta_goal)
-                        dely[i][j] = 50 * s * np.sin(theta_goal)
-                if d_goal < r:
-                    delx[i][j] = 0
-                    dely[i][j] = 0
-
-        return delx, dely, obstacle, r
+                    # Smooth decay outside obstacle boundary using radius as scaling factor
+                    Z_obstacle[i, j] = -200 * r_obstacle / (d_obstacle ** 2)
 
 
