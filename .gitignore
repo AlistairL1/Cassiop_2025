@@ -7,6 +7,8 @@ __pycache__
 *.profile
 *.calltree
 swarm_rescue.egg-info
+src/swarm_rescue/Test
+
 
 # Temporary and binary files
 *~
