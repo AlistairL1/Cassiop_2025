@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from solutions.implementations_Alistair.point_AB.empty_map import EmptyMap
-from solutions.my_drone_eval import MyDroneEval
+from solutions.implementations_Alistair.point_AB.my_drone_eval import MyDroneEval
 from spg_overlay.gui_map.gui_sr import GuiSR
 
 def main():
