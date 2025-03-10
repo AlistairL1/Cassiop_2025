@@ -409,6 +409,7 @@ class DroneAbstract(Agent):
             plt.cla()
             plt.axis((-math.pi, math.pi, 0, self.lidar().max_range))
             plt.plot(self.lidar().ray_angles, self.lidar_values(), "g.:")
+            plt.plot(np.gradient((self.lidar().ray_angles)), "r:")
             plt.grid(True)
             plt.draw()
             plt.pause(0.001)

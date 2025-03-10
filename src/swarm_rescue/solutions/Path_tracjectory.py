@@ -22,20 +22,10 @@ from spg_overlay.utils.misc_data import MiscData
 class Path_tracjectory(DroneAbstract):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.obstacle = []
+        # liste des obstacles dejà enregistré, verifier si dans la zone de la grid, il y a une postion d'obstacle contenu dans la liste
 
     def calculate_gradient(Z, X, Y):
-        """
-        Calculate the gradient of the potential field and find minimum gradient point.
-
-        Args:
-            Z: The potential field values
-            X, Y: The meshgrid coordinates
-
-        Returns:
-            grad_x, grad_y: The gradient components
-            min_grad_point: Coordinates of minimum gradient magnitude point
-            no_field: Boolean indicating if there's no meaningful gradient field
-        """
         # Calculate gradient using numpy's gradient function
         grad_y, grad_x = np.gradient(Z)
 
@@ -58,28 +48,59 @@ class Path_tracjectory(DroneAbstract):
             # No meaningful field case
             return grad_x, grad_y, None, True
 
-    def add_obstacle(self):
-        # Define grid
-        x = np.arange(0, 50, 1)
-        y = np.arange(0, 50, 1)
-        X, Y = np.meshgrid(x, y)
+    def obstacle_gaussian(self, obstacle_position,variance_x, variance_y, r_obstacle,amplitude, X, Y):
 
-        # Define obstacle parameters
-        obstacle = (25, 25)  # Center of the obstacle
-        r_obstacle = 3  # Obstacle radius - increased for better visualization
-
-        # Create smoother potential field for the obstacle only
+        # obstacle_position is the center of the obstacle, check which object it is after LIDAR calculation
+        # Create potential field using multivariate gaussian
         Z_obstacle = np.zeros_like(X, dtype=float)
 
+        # Create multivariate gaussian potential field
         for i in range(len(x)):
             for j in range(len(y)):
-                d_obstacle = np.sqrt((obstacle[0] - X[i, j]) ** 2 + (obstacle[1] - Y[i, j]) ** 2)
+                # Distance from point to obstacle center
+                dx = X[i, j] - obstacle_position[0]
+                dy = Y[i, j] - obstacle_position[1]
 
-                # Create a stronger repulsion within the obstacle radius
+                # Inside the obstacle: constant maximum repulsion
+                d_obstacle = np.sqrt(dx ** 2 + dy ** 2)
                 if d_obstacle <= r_obstacle:
-                    Z_obstacle[i, j] = -200  # Maximum repulsion inside obstacle
+                    Z_obstacle[i, j] = - amplitude
                 else:
-                    # Smooth decay outside obstacle boundary using radius as scaling factor
-                    Z_obstacle[i, j] = -200 * r_obstacle / (d_obstacle ** 2)
+                    # Multivariate Gaussian function: A * exp(-((x-μ)²/(2σx²) + (y-μ)²/(2σy²)))
+                    Z_obstacle[i, j] = - amplitude * np.exp(-(dx ** 2 / (2 * variance_x) + dy ** 2 / (2 * variance_y))) * (r_obstacle / d_obstacle)
+        return Z_obstacle
+        
+    def moving_grid(self, gps_position):
+        grid_size = 50  # Define the size of the grid
+        half_size = grid_size // 2
 
+        # Create a grid centered around the gps_position
+        x = np.arange(gps_position[0] - half_size, gps_position[0] + half_size, 1)
+        y = np.arange(gps_position[1] - half_size, gps_position[1] + half_size, 1)
+        X, Y = np.meshgrid(x, y)
 
+        return X, Y
+
+    def obstacle_position_lidar(self, gps_position, compass_angle, lidar_detection):
+        # Extract the distance to the obstacle from the lidar detection
+        distance_to_obstacle = lidar_detection[0]
+
+        # Calculate the angle of the obstacle relative to the north
+        obstacle_angle = compass_angle + lidar_detection[1]
+
+        # Convert the angle to radians
+        obstacle_angle_rad = np.deg2rad(obstacle_angle)
+
+        # Calculate the obstacle position using trigonometry
+        obstacle_x = gps_position[0] + distance_to_obstacle * np.cos(obstacle_angle_rad)
+        obstacle_y = gps_position[1] + distance_to_obstacle * np.sin(obstacle_angle_rad)
+
+        # Return the obstacle position
+        return obstacle_x, obstacle_y       #retourne un tuple
+        
+    def is_obstacle_recorded(self, obstacle_position):
+        
+        for recorded_obstacle in self.obstacle:
+            if np.allclose(recorded_obstacle, obstacle_position, atol=1e-2):
+                return True
+        return False

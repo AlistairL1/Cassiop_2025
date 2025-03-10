@@ -1,12 +1,9 @@
-"""
-This program can be launched directly.
-To move the drone, you have to click on the map, then use the arrows on the
-keyboard
-"""
-
 import sys
 from pathlib import Path
 from typing import Type
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 from spg.playground import Playground
 
@@ -27,6 +24,16 @@ from spg_overlay.utils.misc_data import MiscData
 class MyDroneLidar(DroneAbstract):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.lidar_data = []
+        self.lidar = self.init_lidar_sensor()
+
+    def init_lidar_sensor(self):
+        """
+        Initialize the LIDAR sensor.
+        """
+        # Assuming there's a method to initialize the LIDAR sensor
+        # Replace this with actual initialization code
+        return LidarSensor()
 
     def define_message_for_all(self):
         """
@@ -43,6 +50,13 @@ class MyDroneLidar(DroneAbstract):
                    "rotation": 0.0,
                    "grasper": 0}
         return command
+
+    def update_lidar_data(self):
+        """
+        Update the LIDAR data.
+        """
+        if self.lidar:
+            self.lidar_data = self.lidar.get_sensor_values()
 
 
 class MyMapLidar(MapAbstract):
@@ -83,6 +97,21 @@ class MyMapLidar(MapAbstract):
         return playground
 
 
+def update_fft_plot(frame, drone, line):
+    """
+    Update the FFT plot with new LIDAR data.
+    """
+    drone.update_lidar_data()
+    if drone.lidar_data:
+        # Compute FFT
+        fft_values = np.fft.fft(drone.lidar_data)
+        fft_freq = np.fft.fftfreq(len(drone.lidar_data))
+
+        # Update line data
+        line.set_data(fft_freq, np.abs(fft_values))
+    return line,
+
+
 def main():
     my_map = MyMapLidar()
     my_playground = my_map.construct_playground(drone_type=MyDroneLidar)
@@ -98,6 +127,24 @@ def main():
                 use_keyboard=True,
                 enable_visu_noises=True,
                 )
+
+    # Set up the FFT plot
+    fig, ax = plt.subplots()
+    line, = ax.plot([], [], lw=2)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1000)
+    ax.set_xlabel('Frequency')
+    ax.set_ylabel('Amplitude')
+    ax.set_title('Real-time FFT of LIDAR Data')
+
+    # Get the drone instance
+    drone = my_map._drones[0]
+
+    # Create animation
+    ani = FuncAnimation(fig, update_fft_plot, fargs=(drone, line), interval=100)
+
+    # Run the GUI and the FFT plot
+    plt.show(block=False)
     gui.run()
 
 
